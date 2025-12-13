@@ -1,10 +1,15 @@
 #include <Arduino.h>
 
 // Pins
-const int inputPins[] = {11, 12, 10}; // A,B,C LEDs
+const int inputPins[] = {11, 12, 10}; // Input LEDs A, B, C
 const int numInputs = sizeof(inputPins)/sizeof(inputPins[0]);
 const int outputPin = 9;               // Output LED
 
+// Correct/Wrong LEDs
+const int greenPin = A1; // correct
+const int redPin   = A0; // wrong
+
+// 7-segment pins mapping (A-G)
 const int segMapping[7] = {
     8, // A
     3, // B
@@ -16,47 +21,54 @@ const int segMapping[7] = {
 };
 
 // Digit patterns 0-9 (common-cathode)
-// Column order: A, F, G, D, E, B, C
 const byte digits[10][7] = {
-    {1,1,0,1,1,1,1}, // 0 → A,F,D,E,B,C ON, G off
-    {0,0,0,0,0,1,1}, // 1 → B,C ON
-    {1,0,1,1,1,1,0}, // 2 → A,G,D,B,E ON
-    {1,0,1,1,0,1,1}, // 3 → A,G,D,B,C ON
-    {0,1,1,0,0,1,1}, // 4 → F,G,B,C ON
-    {1,1,1,1,0,0,1}, // 5 → A,F,G,C,D ON
-    {1,1,1,1,1,0,1}, // 6 → A,F,G,D,C,E ON
-    {1,0,0,0,0,1,1}, // 7 → A,B,C ON
-    {1,1,1,1,1,1,1}, // 8 → All ON
-    {1,1,1,0,0,1,1}  // 9 → A,F,G,B,C ON
+    {1,1,0,1,1,1,1}, // 0
+    {0,0,0,0,0,1,1}, // 1
+    {1,0,1,1,1,1,0}, // 2
+    {1,0,1,1,0,1,1}, // 3
+    {0,1,1,0,0,1,1}, // 4
+    {1,1,1,1,0,0,1}, // 5
+    {1,1,1,1,1,0,1}, // 6
+    {1,0,0,0,0,1,1}, // 7
+    {1,1,1,1,1,1,1}, // 8
+    {1,1,1,0,0,1,1}  // 9
 };
 
-// Turn off all segments
+// Turn off all 7-segment LEDs
 void clearSegments() {
-    for(int i=0; i<7; i++) digitalWrite(segMapping[i], LOW);
+    for(int i=0;i<7;i++) digitalWrite(segMapping[i], LOW);
 }
 
-// Light multiple segments by letters
+// Light segments by letters (A-G)
 void lightSegments(String segs) {
     clearSegments();
-    for(unsigned int i=0; i<segs.length(); i++){
+    for(unsigned int i=0;i<segs.length();i++){
         char c = segs[i];
-        if(c >= 'A' && c <= 'G'){
+        if(c>='A' && c<='G'){
             digitalWrite(segMapping[c-'A'], HIGH);
         }
     }
 }
 
 void setup() {
-    // Inputs
-    for(int i=0; i<numInputs; i++){
+    // Input LEDs
+    for(int i=0;i<numInputs;i++){
         pinMode(inputPins[i], OUTPUT);
         digitalWrite(inputPins[i], LOW);
     }
+
+    // Output LED
     pinMode(outputPin, OUTPUT);
     digitalWrite(outputPin, LOW);
 
+    // Correct/Wrong LEDs
+    pinMode(greenPin, OUTPUT);
+    pinMode(redPin, OUTPUT);
+    digitalWrite(greenPin, LOW);
+    digitalWrite(redPin, LOW);
+
     // 7-segment
-    for(int i=0; i<7; i++){
+    for(int i=0;i<7;i++){
         pinMode(segMapping[i], OUTPUT);
         digitalWrite(segMapping[i], LOW);
     }
@@ -73,8 +85,8 @@ void loop() {
         String fields[7];
         int fieldIndex=0;
         String temp="";
-        for(unsigned int i=0; i<input.length(); i++){
-            char c=input[i];
+        for(unsigned int i=0;i<input.length();i++){
+            char c = input[i];
             if(c=='~'){
                 if(fieldIndex<7){
                     fields[fieldIndex++] = temp;
@@ -89,6 +101,8 @@ void loop() {
             for(int i=0;i<numInputs;i++) digitalWrite(inputPins[i], LOW);
             digitalWrite(outputPin, LOW);
             clearSegments();
+            digitalWrite(greenPin, LOW);
+            digitalWrite(redPin, LOW);
         } else {
             // Input LEDs
             for(int i=0;i<numInputs;i++){
@@ -109,6 +123,15 @@ void loop() {
                 }
             } else { // letters A-G or multiple letters
                 lightSegments(seg);
+            }
+
+            // Correct / Wrong LEDs
+            if(fields[5]=="1"){  // correct
+                digitalWrite(greenPin, HIGH);
+                digitalWrite(redPin, LOW);
+            } else {             // wrong
+                digitalWrite(greenPin, LOW);
+                digitalWrite(redPin, HIGH);
             }
         }
     }

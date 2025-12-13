@@ -16,7 +16,7 @@ public class Simulation {
             return;
         }
 
-        code = "0~0~0~1~X~1~1";
+        code = "0~0~0~1~X~0~1";
         sendCode(code);
 
         try {
@@ -33,7 +33,7 @@ public class Simulation {
             } catch (InterruptedException ignored) {}
         }
 
-        code = "0~0~0~0~X~0~0";
+        code = "1~0~0~0~X~2~0";
         sendCode(code);
 
         serialConnection.closePort();
