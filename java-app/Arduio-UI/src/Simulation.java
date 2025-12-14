@@ -2,6 +2,9 @@ public class Simulation {
     public static SerialConnection serialConnection;
     private static String code;
 
+    public static final int width = 800;
+    public static final int height = 600;
+
     public Simulation() {
         serialConnection = new SerialConnection();
     }
