@@ -9,8 +9,8 @@ public class Button {
     String text;
     int x;
     int y;
-    static int height;
-    static int width;
+    int height;
+    int width;
     String comment;
 
     boolean previousMousePressed = false;
@@ -34,6 +34,8 @@ public class Button {
     Color colorB;
 
     boolean rounded;
+    boolean hasPicture;
+    private String imagePath;
 
     boolean canChangeSize = false;
     double sizeMax = 1.05;
@@ -107,9 +109,24 @@ public class Button {
             StdDraw.setPenColor(background);
             StdDraw.filledRectangle(rotatedX, rotatedY, (width * size) / 2, (height * size) / 2);
         }
+
+        if (hasPicture && imagePath != null) {
+            double drawW = width * size;
+            double drawH = height * size;
+            try {
+                StdDraw.picture(rotatedX, rotatedY, imagePath, drawW, drawH);
+            } catch (Exception ignored) {
+            }
+        }
+
         StdDraw.setPenColor(this.textColor);
         StdDraw.setFont(this.textFont);
         StdDraw.text(rotatedX, rotatedY, text);
+    }
+
+    public void addPicture(String path) {
+        this.imagePath = path;
+        this.hasPicture = true;
     }
 
     public void drawRoundedRectangle(double x, double y, double width, double height, int numSides) {

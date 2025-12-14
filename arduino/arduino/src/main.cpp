@@ -44,9 +44,8 @@ void lightSegments(String segs) {
     clearSegments();
     for(unsigned int i=0;i<segs.length();i++){
         char c = segs[i];
-        if(c>='A' && c<='G'){
+        if(c>='A' && c<='G')
             digitalWrite(segMapping[c-'A'], HIGH);
-        }
     }
 }
 
@@ -92,9 +91,11 @@ void loop() {
                     fields[fieldIndex++] = temp;
                     temp="";
                 }
-            } else temp += c;
+            } else 
+                temp += c;
         }
-        if(fieldIndex<7) fields[fieldIndex] = temp;
+        if(fieldIndex<7) 
+          fields[fieldIndex] = temp;
 
         // Reset
         if(fields[0]=="1"){
@@ -105,33 +106,41 @@ void loop() {
             digitalWrite(redPin, LOW);
         } else {
             // Input LEDs
-            for(int i=0;i<numInputs;i++){
+            for(int i=0;i<numInputs;i++)
                 digitalWrite(inputPins[i], fields[i+1].toInt()==1 ? HIGH : LOW);
-            }
+            
 
             // Output LED
             digitalWrite(outputPin, fields[6].toInt()==1 ? HIGH : LOW);
 
             // 7-segment display
             String seg = fields[4];
-            if(seg=="X"){
+            if(seg=="X")
                 clearSegments();
-            } else if(seg.length()==1 && seg[0]>='0' && seg[0]<='9'){ // digit
+
+            else if(seg.length()==1 && seg[0]>='0' && seg[0]<='9'){ // digit
                 int num = seg.toInt();
-                for(int i=0;i<7;i++){
+
+                for(int i=0;i<7;i++)
                     digitalWrite(segMapping[i], digits[num][i]?HIGH:LOW);
-                }
-            } else { // letters A-G or multiple letters
-                lightSegments(seg);
-            }
+              
+            } else
+                lightSegments(seg); // letters A-G or multiple letters
+            
 
             // Correct / Wrong LEDs
-            if(fields[5]=="1"){  // correct
+            if(fields[5] == "1"){  // correct
                 digitalWrite(greenPin, HIGH);
                 digitalWrite(redPin, LOW);
-            } else {             // wrong
+
+            } else if(fields[5] == "0"){ // wrong
                 digitalWrite(greenPin, LOW);
                 digitalWrite(redPin, HIGH);
+
+            } else if(fields[5] == "2"){  // off
+                digitalWrite(greenPin, LOW);
+                digitalWrite(redPin, LOW);
+
             }
         }
     }

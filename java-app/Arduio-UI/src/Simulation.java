@@ -1,25 +1,99 @@
+import java.awt.*;
+
 public class Simulation {
     public static SerialConnection serialConnection;
     private static String code;
 
-    public static final int width = 800;
-    public static final int height = 600;
+    public static final int width = 1600;
+    public static final int height = 800;
+    public static boolean running = true;
+
+    boolean threeInputMode = true;
+
+    Button[] select3InputLogicGatesButtonList = new Button[7];
+    Button[] select2InputLogicGatesButtonList; // will add later
+
+    Button swapInputModeButton;
+
+    
 
     public Simulation() {
         serialConnection = new SerialConnection();
-    }
 
-    public static void setCode(String code) {
-        Simulation.code = code;
+        int buttonWidth = 160;
+        int buttonHeight = 75;
+        select3InputLogicGatesButtonList[0] = new Button(100, 700, buttonWidth, buttonHeight, "AND", Color.GRAY);
+        select3InputLogicGatesButtonList[0].addPicture("and_gate_3_input.png");
+        select3InputLogicGatesButtonList[1] = new Button(300, 700, buttonWidth, buttonHeight, "OR", Color.GRAY);
+        select3InputLogicGatesButtonList[1].addPicture("or_gate_3_input.png");
+        select3InputLogicGatesButtonList[2] = new Button(500, 700, buttonWidth, buttonHeight, "NAND", Color.GRAY);
+        select3InputLogicGatesButtonList[2].addPicture("nand_gate_3_input.png");
+        select3InputLogicGatesButtonList[3] = new Button(700, 700, buttonWidth, buttonHeight, "NOR", Color.GRAY);
+        select3InputLogicGatesButtonList[3].addPicture("nor_gate_3_input.png");
+        select3InputLogicGatesButtonList[4] = new Button(900, 700, buttonWidth, buttonHeight, "XOR", Color.GRAY);
+        select3InputLogicGatesButtonList[4].addPicture("xor_gate_3_input.png");
+        select3InputLogicGatesButtonList[5] = new Button(1100, 700, buttonWidth, buttonHeight, "XNOR", Color.GRAY);
+        select3InputLogicGatesButtonList[5].addPicture("xnor_gate_3_input.png");
+        select3InputLogicGatesButtonList[6] = new Button(1300, 700, buttonWidth, buttonHeight, "NOT", Color.GRAY);
+        select3InputLogicGatesButtonList[6].addPicture("not_gate.png");
+
+        swapInputModeButton = new Button(1500, 700, 75, 100, "", new Color(163, 56, 56));
+        swapInputModeButton.addPicture("23.png");
+
+        for (int i = 0; i < select3InputLogicGatesButtonList.length; i++) {
+            select3InputLogicGatesButtonList[i].enableGradient(new Color(71, 91, 128), new Color(73, 92, 172));
+            if(select2InputLogicGatesButtonList != null)
+                select2InputLogicGatesButtonList[i].enableGradient(new Color(71, 91, 128), new Color(73, 92, 172));
+
+        }
     }
 
     public static void main(String[] args) {
-        if (!SerialConnection.openPort("COM4")) {
-            System.out.println("Failed to open COM4");
+        Simulation sim = new Simulation();
+
+        // open port for arduino
+        if (!SerialConnection.openPort("COM5")) {
+            System.out.println("Failed to open COM5");
             return;
         }
 
-        code = "0~0~0~1~X~0~1";
+        // Run the simulation
+        // testCode();
+        sim.run();
+
+    }
+
+    public void run() {
+        // Set up Canvas
+        StdDraw.setCanvasSize(width, height);
+        StdDraw.setXscale(0, width);
+        StdDraw.setYscale(0, height);
+        StdDraw.setPenRadius(0.01);
+        StdDraw.enableDoubleBuffering();
+
+        while (running) {
+            StdDraw.clear(StdDraw.BLACK);
+
+            if (threeInputMode) {
+                for (Button button : select3InputLogicGatesButtonList) {
+                    button.update();
+                    button.draw();
+                }
+            }
+
+            swapInputModeButton.update();
+            swapInputModeButton.draw();
+
+            StdDraw.show();
+            StdDraw.pause(10);
+        }
+
+        serialConnection.closePort();
+    }
+
+
+    public static void testCode(){
+        code = "0~1~0~0~X~1~1";
         sendCode(code);
 
         try {
@@ -38,8 +112,10 @@ public class Simulation {
 
         code = "1~0~0~0~X~2~0";
         sendCode(code);
+    }
 
-        serialConnection.closePort();
+    public static void setCode(String code) {
+        Simulation.code = code;
     }
 
     public static void sendCode(String code) {
