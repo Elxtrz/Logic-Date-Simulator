@@ -15,7 +15,14 @@ public class Simulation {
 
     Button swapInputModeButton;
 
-    
+    Button input1Button;
+    Button input2Button;
+    Button input3Button;
+    Button outputButton;
+
+    Button testButton;
+
+    int selectedGate = -1;
 
     public Simulation() {
         serialConnection = new SerialConnection();
@@ -44,8 +51,21 @@ public class Simulation {
             select3InputLogicGatesButtonList[i].enableGradient(new Color(71, 91, 128), new Color(73, 92, 172));
             if(select2InputLogicGatesButtonList != null)
                 select2InputLogicGatesButtonList[i].enableGradient(new Color(71, 91, 128), new Color(73, 92, 172));
-
         }
+
+        int inputButtonWidth = 180;
+        int inputButtonHeight = 20;
+        input1Button = new Button(150, 500, inputButtonWidth, inputButtonHeight, "1", Color.red);
+        input2Button = new Button(150, 400, inputButtonWidth, inputButtonHeight, "2", Color.red);
+        input3Button = new Button(150, 300, inputButtonWidth, inputButtonHeight, "3", Color.red);
+        outputButton = new Button(750, 395, inputButtonWidth, inputButtonHeight+5, "", Color.red);
+
+        input1Button.setComment("0");
+        input2Button.setComment("0");
+        input3Button.setComment("0");
+        outputButton.setComment("0");
+
+        testButton = new Button(1400, 50, 100, 50, "Test", Color.BLUE);
     }
 
     public static void main(String[] args) {
@@ -61,6 +81,7 @@ public class Simulation {
         // testCode();
         sim.run();
 
+        serialConnection.closePort();
     }
 
     public void run() {
@@ -72,23 +93,98 @@ public class Simulation {
         StdDraw.enableDoubleBuffering();
 
         while (running) {
+            // Background
             StdDraw.clear(StdDraw.BLACK);
 
+            if(input1Button.isClicked()){
+                input1Button.setComment(input1Button.getComment().equals("0") ? "1" : "0");
+                input1Button.setBackground(input1Button.getBackground() == Color.red ? Color.green : Color.red);
+            } else if(input2Button.isClicked()){
+                input2Button.setComment(input2Button.getComment().equals("0") ? "1" : "0");
+                input2Button.setBackground(input2Button.getBackground() == Color.red ? Color.green : Color.red);
+            } else if(threeInputMode && input3Button.isClicked()){
+                input3Button.setComment(input3Button.getComment().equals("0") ? "1" : "0");
+                input3Button.setBackground(input3Button.getBackground() == Color.red ? Color.green : Color.red);
+            } else if(outputButton.isClicked()){
+                outputButton.setComment(outputButton.getComment().equals("0") ? "1" : "0");
+                outputButton.setBackground(outputButton.getBackground() == Color.red ? Color.green : Color.red);
+            }
+
+            if(testButton.isClicked())
+                sendCodeToArduino();
+
+            StdDraw.text(150,700,"1");
+            StdDraw.text(350,700,"2");
+            StdDraw.text(550,700,"3");
+            StdDraw.text(750,700,"4");
+            StdDraw.text(950,700,"5");
+            StdDraw.text(1150,700,"6");
+            StdDraw.text(1350,700,"7");
+
+            for (int i = 0; i < select3InputLogicGatesButtonList.length; i++) {
+                if(select3InputLogicGatesButtonList[i].isClicked()) {
+                    selectedGate = i+1;
+                }
+            }
+
+
+            // Update and draw buttons
             if (threeInputMode) {
                 for (Button button : select3InputLogicGatesButtonList) {
                     button.update();
                     button.draw();
                 }
             }
-
             swapInputModeButton.update();
             swapInputModeButton.draw();
+            input1Button.update();
+            input1Button.draw();
+            input2Button.update();
+            input2Button.draw();
+            input2Button.draw();
+            if (threeInputMode) {
+                input3Button.update();
+                input3Button.draw();
+            } else{
+                input3Button.setEnabled(false);
+                input3Button.enableGradient(Color.GRAY, Color.DARK_GRAY);
+            }
+            outputButton.update();
+            outputButton.draw();
+            testButton.update();
+            testButton.draw();
 
+
+            // Render
             StdDraw.show();
             StdDraw.pause(10);
         }
+    }
 
-        serialConnection.closePort();
+    public void sendCodeToArduino() {
+        // Code -> R~A~B~C~#~Y~O
+
+        // R
+        StringBuilder simOutput = new StringBuilder("0~");
+
+        // A, B, C
+        simOutput.append(input1Button.getComment()).append("~");
+        simOutput.append(input2Button.getComment()).append("~");
+        if (threeInputMode)
+            simOutput.append(input3Button.getComment()).append("~");
+        else
+            simOutput.append("X~");
+
+        // #
+        simOutput.append(selectedGate).append("~");
+
+        // Y
+        simOutput.append("1~"); // to do (check logic)
+
+        // O
+        simOutput.append(outputButton.getComment());
+
+        SerialConnection.sendCodeToArduino(simOutput.toString());
     }
 
 
