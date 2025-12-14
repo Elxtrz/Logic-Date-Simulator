@@ -11,9 +11,8 @@ public class Simulation {
     boolean threeInputMode = true;
 
     Button[] select3InputLogicGatesButtonList = new Button[7];
-    Button[] select2InputLogicGatesButtonList; // will add later
 
-    Button swapInputModeButton;
+    Button gateNumberButton;
 
     Button input1Button;
     Button input2Button;
@@ -23,6 +22,12 @@ public class Simulation {
     Button testButton;
 
     int selectedGate = -1;
+
+    Button resetButton;
+
+    Button isCorrectButton;
+
+    Button selectedGateButton;
 
     public Simulation() {
         serialConnection = new SerialConnection();
@@ -44,28 +49,34 @@ public class Simulation {
         select3InputLogicGatesButtonList[6] = new Button(1300, 700, buttonWidth, buttonHeight, "NOT", Color.GRAY);
         select3InputLogicGatesButtonList[6].addPicture("not_gate.png");
 
-        swapInputModeButton = new Button(1500, 700, 75, 100, "", new Color(163, 56, 56));
-        swapInputModeButton.addPicture("23.png");
+        gateNumberButton = new Button(1500, 700, 100, 60, "Gate: " + selectedGate, new Color(228, 107, 107));
 
-        for (int i = 0; i < select3InputLogicGatesButtonList.length; i++) {
+        for (int i = 0; i < select3InputLogicGatesButtonList.length; i++)
             select3InputLogicGatesButtonList[i].enableGradient(new Color(71, 91, 128), new Color(73, 92, 172));
-            if(select2InputLogicGatesButtonList != null)
-                select2InputLogicGatesButtonList[i].enableGradient(new Color(71, 91, 128), new Color(73, 92, 172));
-        }
 
-        int inputButtonWidth = 180;
+
+        int inputButtonWidth = 230;
         int inputButtonHeight = 20;
         input1Button = new Button(150, 500, inputButtonWidth, inputButtonHeight, "1", Color.red);
         input2Button = new Button(150, 400, inputButtonWidth, inputButtonHeight, "2", Color.red);
         input3Button = new Button(150, 300, inputButtonWidth, inputButtonHeight, "3", Color.red);
-        outputButton = new Button(750, 395, inputButtonWidth, inputButtonHeight+5, "", Color.red);
+        outputButton = new Button(700, 400, inputButtonWidth, inputButtonHeight+5, "", Color.red);
 
         input1Button.setComment("0");
         input2Button.setComment("0");
         input3Button.setComment("0");
         outputButton.setComment("0");
 
-        testButton = new Button(1400, 50, 100, 50, "Test", Color.BLUE);
+        testButton = new Button(1500, 50, 100, 50, "Test", Color.BLUE);
+        testButton.enableGradient(new Color(215, 239, 71), new Color(41, 154, 12));
+
+        resetButton = new Button(60, 50, 50, 50, "", new Color(216, 116, 54));
+        resetButton.addPicture("reset_icon.png");
+
+        isCorrectButton = new Button(1300, 50, 150, 50, "Is Correct?");
+        isCorrectButton.enableGradient(new Color(78, 230, 132), new Color(193, 13, 34));
+
+        selectedGateButton = new Button(430, 400, 300, 225, "", Color.BLACK);
     }
 
     public static void main(String[] args) {
@@ -110,23 +121,37 @@ public class Simulation {
                 outputButton.setBackground(outputButton.getBackground() == Color.red ? Color.green : Color.red);
             }
 
-            if(testButton.isClicked())
-                sendCodeToArduino();
+            if(testButton.isClicked() && selectedGate != -1)
+                sendCodeToArduino(false);
 
-            StdDraw.text(150,700,"1");
-            StdDraw.text(350,700,"2");
-            StdDraw.text(550,700,"3");
-            StdDraw.text(750,700,"4");
-            StdDraw.text(950,700,"5");
-            StdDraw.text(1150,700,"6");
-            StdDraw.text(1350,700,"7");
-
+            StdDraw.setFont(new Font("Arial", Font.BOLD, 22));
             for (int i = 0; i < select3InputLogicGatesButtonList.length; i++) {
                 if(select3InputLogicGatesButtonList[i].isClicked()) {
                     selectedGate = i+1;
+                    gateNumberButton.setText("Gate: " + selectedGate);
                 }
             }
 
+            if(selectedGate != -1)
+                drawGates(selectedGate);
+
+            if(resetButton.isClicked()) {
+                sendCodeToArduino(true);
+                selectedGate = -1;
+                gateNumberButton.setText("Gate: " + selectedGate);
+
+                input1Button.setComment("0");
+                input1Button.setBackground(Color.red);
+                input2Button.setComment("0");
+                input2Button.setBackground(Color.red);
+                input3Button.setComment("0");
+                input3Button.setBackground(Color.red);
+                outputButton.setComment("0");
+                outputButton.setBackground(Color.red);
+
+                isCorrectButton.enableGradient(new Color(78, 230, 132), new Color(193, 13, 34));
+                isCorrectButton.setText("Is Correct?");
+            }
 
             // Update and draw buttons
             if (threeInputMode) {
@@ -135,8 +160,8 @@ public class Simulation {
                     button.draw();
                 }
             }
-            swapInputModeButton.update();
-            swapInputModeButton.draw();
+            gateNumberButton.update();
+            gateNumberButton.draw();
             input1Button.update();
             input1Button.draw();
             input2Button.update();
@@ -153,7 +178,23 @@ public class Simulation {
             outputButton.draw();
             testButton.update();
             testButton.draw();
+            resetButton.update();
+            resetButton.draw();
+            isCorrectButton.update();
+            isCorrectButton.draw();
+            selectedGateButton.update();
+            selectedGateButton.draw();
 
+            StdDraw.setPenColor(Color.red);
+            StdDraw.setFont(new Font("Arial", Font.BOLD, 22));
+            StdDraw.text(100,750,"1");
+            StdDraw.text(300,750,"2");
+            StdDraw.text(500,750,"3");
+            StdDraw.text(700,750,"4");
+            StdDraw.text(900,750,"5");
+            StdDraw.text(1100,750,"6");
+            StdDraw.text(1300,750,"7");
+            StdDraw.setPenColor(Color.black);
 
             // Render
             StdDraw.show();
@@ -161,7 +202,32 @@ public class Simulation {
         }
     }
 
-    public void sendCodeToArduino() {
+    private void drawGates(int selectedGate) {
+        StdDraw.setFont(new Font("Arial", Font.BOLD, 22));
+        for (int i = 0; i < select3InputLogicGatesButtonList.length; i++) {
+            if (select3InputLogicGatesButtonList[i].isClicked()) {
+                selectedGate = i + 1;
+                gateNumberButton.setText("Gate: " + selectedGate);
+                String[] pics = {
+                        "and_gate_3_input.png",
+                        "or_gate_3_input.png",
+                        "nand_gate_3_input.png",
+                        "nor_gate_3_input.png",
+                        "xor_gate_3_input.png",
+                        "xnor_gate_3_input.png",
+                        "not_gate.png"
+                };
+                selectedGateButton.addPicture(pics[i]);
+            }
+        }
+    }
+
+    public void sendCodeToArduino(boolean reset) {
+        if(reset) {
+            SerialConnection.sendCodeToArduino("1~0~0~0~X~0~0");
+            return;
+        }
+
         // Code -> R~A~B~C~#~Y~O
 
         // R
@@ -179,12 +245,62 @@ public class Simulation {
         simOutput.append(selectedGate).append("~");
 
         // Y
-        simOutput.append("1~"); // to do (check logic)
+        simOutput.append(checkInput(simOutput.toString(),outputButton.getComment()));
 
         // O
         simOutput.append(outputButton.getComment());
 
         SerialConnection.sendCodeToArduino(simOutput.toString());
+    }
+
+    private String checkInput(String input, String output) {
+        String[] parts = input.split("~");
+
+        int A = Integer.parseInt(parts[1]);
+        int B = Integer.parseInt(parts[2]);
+        int C = Integer.parseInt(parts[3]);
+        int gateNumber = Integer.parseInt(parts[4]);
+
+        int expectedOutput = Integer.parseInt(output);
+        int actualOutput = evaluateGate(gateNumber, A, B, C);
+
+        if(actualOutput == expectedOutput) {
+            isCorrectButton.enableGradient(new Color(78, 230, 132), new Color(14, 112, 34));
+            isCorrectButton.setText("Correct");
+        } else {
+            isCorrectButton.enableGradient(new Color(230, 78, 78), new Color(193, 13, 34));
+            isCorrectButton.setText("Wrong");
+        }
+
+        return (actualOutput == expectedOutput) ? "1~" : "0~";
+    }
+
+    private int evaluateGate(int gate, int A, int B, int C) {
+        switch (gate) {
+            case 1: // AND
+                return A & B & C;
+
+            case 2: // OR
+                return A | B | C;
+
+            case 3: // NAND
+                return (A & B & C) == 1 ? 0 : 1;
+
+            case 4: // NOR
+                return (A | B | C) == 1 ? 0 : 1;
+
+            case 5: // XOR (odd parity)
+                return A ^ B ^ C;
+
+            case 6: // XNOR
+                return (A ^ B ^ C) == 1 ? 0 : 1;
+
+            case 7: // NOT (invert A only)
+                return A == 1 ? 0 : 1;
+
+            default:
+                throw new IllegalArgumentException("Invalid gate number");
+        }
     }
 
 
