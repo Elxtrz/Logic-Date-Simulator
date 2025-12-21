@@ -18,6 +18,8 @@ public class Button {
     boolean clicked = false;
     boolean particlesEnabled;
 
+    boolean border = false;
+
     int textX;
     int textY;
 
@@ -87,36 +89,48 @@ public class Button {
             rotatedX = x + Math.cos(angle) * width / 2;
             rotatedY = y + Math.sin(angle) * height / 2;
         }
-        if (rounded)
-            drawRoundedRectangle(rotatedX, rotatedY, width * size, height * size, 50); // 50 sides gives a rounded appearance
-        else
-            StdDraw.rectangle(rotatedX, rotatedY, (width * size) / 2, (height * size) / 2);
 
+        double w = width * size;
+        double h = height * size;
+
+        // draw background (gradient or solid)
         if (isGradient) {
-            for (int i = 0; i <= height * size; i++) {
-                double t = (double) i / (height * size);
+            for (int i = 0; i <= (int) h; i++) {
+                double t = (double) i / h;
                 int red = (int) (colorA.getRed() * (1 - t) + colorB.getRed() * t);
                 int green = (int) (colorA.getGreen() * (1 - t) + colorB.getGreen() * t);
                 int blue = (int) (colorA.getBlue() * (1 - t) + colorB.getBlue() * t);
                 StdDraw.setPenColor(new Color(red, green, blue));
-                StdDraw.line(rotatedX - width * size / 2, rotatedY - height * size / 2 + i, rotatedX + width * size / 2, rotatedY - height * size / 2 + i);
-                StdDraw.setPenColor(Color.black);
-                StdDraw.setPenRadius(0.003);
-                StdDraw.rectangle(rotatedX, rotatedY, (width * size) / 2, (height * size) / 2);
-                StdDraw.setPenRadius(0.007);
+                StdDraw.line(rotatedX - w / 2, rotatedY - h / 2 + i, rotatedX + w / 2, rotatedY - h / 2 + i);
             }
         } else {
             StdDraw.setPenColor(background);
-            StdDraw.filledRectangle(rotatedX, rotatedY, (width * size) / 2, (height * size) / 2);
+            if (rounded)
+                drawRoundedRectangle(rotatedX, rotatedY, w, h, 50);
+            else
+                StdDraw.filledRectangle(rotatedX, rotatedY, w / 2, h / 2);
+
         }
 
+        // picture
         if (hasPicture && imagePath != null) {
-            double drawW = width * size;
-            double drawH = height * size;
+            double drawW = w;
+            double drawH = h;
             try {
                 StdDraw.picture(rotatedX, rotatedY, imagePath, drawW, drawH);
             } catch (Exception ignored) {
             }
+        }
+
+        if (border) {
+            StdDraw.setPenColor(Color.black);
+            StdDraw.setPenRadius(0.003);
+            if (rounded) {
+                drawRoundedRectangle(rotatedX, rotatedY, w, h, 50);
+            } else {
+                StdDraw.rectangle(rotatedX, rotatedY, w / 2, h / 2);
+            }
+            StdDraw.setPenRadius(0.007);
         }
 
         StdDraw.setPenColor(this.textColor);
@@ -124,9 +138,17 @@ public class Button {
         StdDraw.text(rotatedX, rotatedY, text);
     }
 
+    public void setBorder(boolean border) {
+        this.border = border;
+    }
+
     public void addPicture(String path) {
         this.imagePath = path;
         this.hasPicture = true;
+    }
+
+    public boolean hasPicture() {
+        return hasPicture;
     }
 
     public void drawRoundedRectangle(double x, double y, double width, double height, int numSides) {
@@ -389,5 +411,34 @@ class Particle {
                 StdDraw.filledPolygon(sxPoints, syPoints);
                 break;
         }
+    }
+}
+
+class ButtonGroup {
+    ArrayList<Button> buttons;
+
+    public ButtonGroup() {
+        buttons = new ArrayList<>();
+    }
+
+    public void addButton(Button button) {
+        buttons.add(button);
+    }
+
+    public void drawAll() {
+        for (Button button : buttons) {
+            button.draw();
+        }
+    }
+
+    public void updateAll() {
+        for (Button button : buttons) {
+            button.update();
+        }
+    }
+
+    public void changeAllColor(Color color) {
+        for (Button button : buttons)
+            button.setBackground(color);
     }
 }

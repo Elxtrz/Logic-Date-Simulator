@@ -1,8 +1,9 @@
 import java.awt.*;
+import java.util.HashMap;
 
 public class Simulation {
     // Global Variables
-    static int simulationNumber = 1;
+    static int simulationNumber = 2;
 
     int totalSimulations = 2;
 
@@ -13,7 +14,7 @@ public class Simulation {
     public static final int height = 800;
     public static boolean running = true;
 
-    Button toggleSimulationButton;
+    Button toggleSimulationButton; // Future update: use .comment() to get the number of simulation and then add text sating "Simulation: X"
 
     // Sim1 buttons
     Button[] select3InputLogicGatesButtonList = new Button[7];
@@ -47,16 +48,17 @@ public class Simulation {
     Button firstLogicGate_Sim2;
     Button secondLogicGate_Sim2;
 
-    int selectGate1_Sim2 = -1;
-    int selectGate2_Sim2 = -1;
+    int selectGate_Sim2;
 
-    boolean isButton1Selected_Sim2 = false;
+    boolean isButton1Selected_Sim2;
 
     Button showNextStepButton_Sim2;
 
     Button resetButton_Sim2;
 
     Button gateNumberButton_Sim2;
+
+    ButtonGroup wireFromGate1to2_Sim2;
 
     public Simulation() {
         // Set up Serial Connection
@@ -123,6 +125,8 @@ public class Simulation {
     }
 
     public void initialize_Sim2() {
+        selectGate_Sim2 = -1;
+
         int buttonWidth = 160;
         int buttonHeight = 75;
         select2InputLogicGatesButtonList[0] = new Button(100, 700, buttonWidth, buttonHeight, "AND", Color.GRAY);
@@ -147,6 +151,34 @@ public class Simulation {
         resetButton_Sim2.addPicture("reset_icon.png");
 
         gateNumberButton_Sim2 = new Button(1500, 700, 100, 60, "Gate: " + selectedGate, new Color(228, 107, 107));
+
+        showNextStepButton_Sim2 = new Button(1500, 50, 100, 50, "Next Step", Color.BLUE);
+        showNextStepButton_Sim2.enableGradient(new Color(215, 239, 71), new Color(41, 154, 12));
+
+        int inputButtonWidth = 230;
+        int inputButtonHeight = 20;
+        input1Button_Sim2 = new Button(150, 500, inputButtonWidth, inputButtonHeight, "1", Color.red);
+        input2Button_Sim2 = new Button(150, 400, inputButtonWidth, inputButtonHeight, "2", Color.red);
+        input3Button_Sim2 = new Button(320, 300, 565, inputButtonHeight, "3", Color.red);
+        outputButton_Sim2 = new Button(980, 340, inputButtonWidth, inputButtonHeight + 5, "", Color.red);
+
+        input1Button_Sim2.setComment("0");
+        input2Button_Sim2.setComment("0");
+        input3Button_Sim2.setComment("0");
+        outputButton_Sim2.setComment("0");
+
+        isButton1Selected_Sim2 = true;
+        firstLogicGate_Sim2 = new Button(400, 450, 250, 150, "", Color.BLACK);
+        firstLogicGate_Sim2.enableGradient(new Color(24, 12, 55), new Color(78, 24, 24));
+        secondLogicGate_Sim2 = new Button(730, 340, 250, 150, "", Color.BLACK);
+
+        int wireX = 550;
+        wireFromGate1to2_Sim2 = new ButtonGroup();
+        wireFromGate1to2_Sim2.addButton(new Button(wireX, 450, 40, inputButtonHeight, "", Color.RED));
+        wireFromGate1to2_Sim2.addButton(new Button(wireX + 30, 410, inputButtonHeight, 100, "", Color.RED));
+        wireFromGate1to2_Sim2.addButton(new Button(wireX + 35, 350, 30, inputButtonHeight, "", Color.RED));
+
+
     }
 
     public static void main(String[] args) {
@@ -167,7 +199,7 @@ public class Simulation {
                 sim.runTestingYourself_Sim1();
                 break;
             case 2:
-                sim.runCombineLogicGates_Sim2();
+                sim.runCombine2LogicGates_Sim2();
             default:
                 System.out.println("No simulation selected");
         }
@@ -217,20 +249,7 @@ public class Simulation {
 
             if (resetButton_Sim1.isClicked()) {
                 sendCodeToArduino(true);
-                selectedGate = -1;
-                gateNumberButton_Sim1.setText("Gate: " + selectedGate);
-
-                input1Button_Sim1.setComment("0");
-                input1Button_Sim1.setBackground(Color.red);
-                input2Button_Sim1.setComment("0");
-                input2Button_Sim1.setBackground(Color.red);
-                input3Button_Sim1.setComment("0");
-                input3Button_Sim1.setBackground(Color.red);
-                outputButton_Sim1.setComment("0");
-                outputButton_Sim1.setBackground(Color.red);
-
-                isCorrectButton.enableGradient(new Color(78, 230, 132), new Color(193, 13, 34));
-                isCorrectButton.setText("Is Correct?");
+                initialize_Sim1(); // Just reset everything saved
             }
 
             // Update and draw buttons
@@ -294,7 +313,7 @@ public class Simulation {
         }
     }
 
-    private void runCombineLogicGates_Sim2() {
+    private void runCombine2LogicGates_Sim2() {
         // Set up Canvas
         StdDraw.setCanvasSize(width, height);
         StdDraw.setXscale(0, width);
@@ -306,13 +325,6 @@ public class Simulation {
             // Background
             StdDraw.clear(StdDraw.BLACK);
 
-
-            // Update and draw buttons
-            for (Button button : select2InputLogicGatesButtonList) {
-                button.update();
-                button.draw();
-            }
-
             // Global button
             if(toggleSimulationButton.isClicked()){
                 simulationNumber++;
@@ -322,6 +334,114 @@ public class Simulation {
                 SerialConnection.closePort();
                 main(new String[] {});
             }
+
+            // Update and draw buttons
+            for (Button button : select2InputLogicGatesButtonList) {
+                button.update();
+                button.draw();
+            }
+
+            toggleSimulationButton.update();
+            toggleSimulationButton.draw();
+
+            gateNumberButton_Sim2.update();
+            gateNumberButton_Sim2.draw();
+
+            resetButton_Sim2.update();
+            resetButton_Sim2.draw();
+
+            showNextStepButton_Sim2.update();
+            showNextStepButton_Sim2.draw();
+
+            firstLogicGate_Sim2.update();
+            firstLogicGate_Sim2.draw();
+            secondLogicGate_Sim2.update();
+            secondLogicGate_Sim2.draw();
+
+            input1Button_Sim2.update();
+            input1Button_Sim2.draw();
+            input2Button_Sim2.update();
+            input2Button_Sim2.draw();
+            input2Button_Sim2.draw();
+            input3Button_Sim2.update();
+            input3Button_Sim2.draw();
+            outputButton_Sim2.update();
+            outputButton_Sim2.draw();
+
+            wireFromGate1to2_Sim2.updateAll();
+            wireFromGate1to2_Sim2.drawAll();
+
+            // Click Checking
+            for (int i = 0; i < select2InputLogicGatesButtonList.length; i++) {
+                if (select2InputLogicGatesButtonList[i].isClicked()) {
+                    selectGate_Sim2 = i + 1;
+                    gateNumberButton_Sim2.setText("Gate: " + selectGate_Sim2);
+                    String[] pics = {
+                            "and_gate.png",
+                            "or_gate.png",
+                            "nand_gate.png",
+                            "nor_gate.png",
+                            "xor_gate.png",
+                            "xnor_gate.png",
+                            "not_gate.png"
+                    };
+                    if(isButton1Selected_Sim2) {
+                        if(selectGate_Sim2 == 7 && firstLogicGate_Sim2.hasPicture) {
+                            HashMap<Integer,Integer> map = new HashMap<>();
+                            map.put(0, 2);
+                            map.put(1, 3);
+                            map.put(2, 0);
+                            map.put(3, 1);
+                            map.put(4, 5);
+                            map.put(5, 4);
+                            int j = map.get(Integer.parseInt(firstLogicGate_Sim2.getComment()));
+                            firstLogicGate_Sim2.addPicture(pics[j]);
+                            firstLogicGate_Sim2.setComment(j + "");
+                            gateNumberButton_Sim2.setText("Gate: " + (j+1));
+
+                        } else if (selectGate_Sim2 != 7) {
+                            firstLogicGate_Sim2.addPicture(pics[i]);
+                            firstLogicGate_Sim2.setComment(i + "");
+                        }
+                    } else {
+                        if(selectGate_Sim2 == 7 && secondLogicGate_Sim2.hasPicture) {
+                            HashMap<Integer,Integer> map = new HashMap<>();
+                            map.put(0, 2);
+                            map.put(1, 3);
+                            map.put(2, 0);
+                            map.put(3, 1);
+                            map.put(4, 5);
+                            map.put(5, 4);
+                            int j = map.get(Integer.parseInt(secondLogicGate_Sim2.getComment()));
+                            secondLogicGate_Sim2.addPicture(pics[j]);
+                            secondLogicGate_Sim2.setComment(j + "");
+                            gateNumberButton_Sim2.setText("Gate: " + (j+1));
+
+                        } else if (selectGate_Sim2 != 7) {
+                            secondLogicGate_Sim2.addPicture(pics[i]);
+                            secondLogicGate_Sim2.setComment(i + "");
+                        }
+                    }
+                }
+            }
+
+            if (resetButton_Sim2.isClicked()) {
+                sendCodeToArduino(true);
+                initialize_Sim2(); // Just reset everything saved
+            }
+
+            if(firstLogicGate_Sim2.isClicked()){
+                isButton1Selected_Sim2 = true;
+                firstLogicGate_Sim2.enableGradient(new Color(24, 12, 55), new Color(78, 24, 24));
+                secondLogicGate_Sim2.enableGradient(Color.BLACK, Color.BLACK);
+            }
+
+            if(secondLogicGate_Sim2.isClicked()) {
+                isButton1Selected_Sim2 = false;
+                secondLogicGate_Sim2.enableGradient(new Color(24, 12, 55), new Color(78, 24, 24));
+                firstLogicGate_Sim2.enableGradient(Color.BLACK, Color.BLACK);
+            }
+
 
             // logic gate numbering
             StdDraw.setPenColor(Color.red);
