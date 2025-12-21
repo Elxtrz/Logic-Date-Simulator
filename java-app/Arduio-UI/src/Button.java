@@ -151,6 +151,22 @@ public class Button {
         return hasPicture;
     }
 
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
     public void drawRoundedRectangle(double x, double y, double width, double height, int numSides) {
         double[] xCords = new double[numSides];
         double[] yCords = new double[numSides];

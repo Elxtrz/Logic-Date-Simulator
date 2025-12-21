@@ -60,6 +60,17 @@ public class Simulation {
 
     ButtonGroup wireFromGate1to2_Sim2;
 
+    boolean buttonLock;
+
+    int stepCounter_Sim2;
+
+    int outputFromFirstGate_Sim2;
+
+    boolean displayTruthTableGate1_Sim2;
+    boolean displayTruthTableGate2_Sim2;
+
+    Button arrowPointerButton;
+
     public Simulation() {
         // Set up Serial Connection
 //        serialConnection = new SerialConnection();
@@ -126,6 +137,8 @@ public class Simulation {
 
     public void initialize_Sim2() {
         selectGate_Sim2 = -1;
+        outputFromFirstGate_Sim2 = -1;
+        buttonLock = false;
 
         int buttonWidth = 160;
         int buttonHeight = 75;
@@ -178,7 +191,13 @@ public class Simulation {
         wireFromGate1to2_Sim2.addButton(new Button(wireX + 30, 410, inputButtonHeight, 100, "", Color.RED));
         wireFromGate1to2_Sim2.addButton(new Button(wireX + 35, 350, 30, inputButtonHeight, "", Color.RED));
 
+        stepCounter_Sim2 = 0;
 
+        displayTruthTableGate1_Sim2 = false;
+        displayTruthTableGate2_Sim2 = false;
+
+        arrowPointerButton = new Button(1300, 600, 50, 50, "", Color.BLACK);
+        arrowPointerButton.addPicture("arrow.png");
     }
 
     public static void main(String[] args) {
@@ -234,7 +253,7 @@ public class Simulation {
             }
 
             if (testButton.isClicked() && selectedGate != -1)
-                sendCodeToArduino(false);
+                sendCodeToArduino_Sim1(false);
 
             StdDraw.setFont(new Font("Arial", Font.BOLD, 22));
             for (int i = 0; i < select3InputLogicGatesButtonList.length; i++) {
@@ -248,7 +267,7 @@ public class Simulation {
                 drawGates(selectedGate);
 
             if (resetButton_Sim1.isClicked()) {
-                sendCodeToArduino(true);
+                sendCodeToArduino_Sim1(true);
                 initialize_Sim1(); // Just reset everything saved
             }
 
@@ -371,79 +390,136 @@ public class Simulation {
             wireFromGate1to2_Sim2.updateAll();
             wireFromGate1to2_Sim2.drawAll();
 
+            arrowPointerButton.update();
+
             // Click Checking
-            for (int i = 0; i < select2InputLogicGatesButtonList.length; i++) {
-                if (select2InputLogicGatesButtonList[i].isClicked()) {
-                    selectGate_Sim2 = i + 1;
-                    gateNumberButton_Sim2.setText("Gate: " + selectGate_Sim2);
-                    String[] pics = {
-                            "and_gate.png",
-                            "or_gate.png",
-                            "nand_gate.png",
-                            "nor_gate.png",
-                            "xor_gate.png",
-                            "xnor_gate.png",
-                            "not_gate.png"
-                    };
-                    if(isButton1Selected_Sim2) {
-                        if(selectGate_Sim2 == 7 && firstLogicGate_Sim2.hasPicture) {
-                            HashMap<Integer,Integer> map = new HashMap<>();
-                            map.put(0, 2);
-                            map.put(1, 3);
-                            map.put(2, 0);
-                            map.put(3, 1);
-                            map.put(4, 5);
-                            map.put(5, 4);
-                            int j = map.get(Integer.parseInt(firstLogicGate_Sim2.getComment()));
-                            firstLogicGate_Sim2.addPicture(pics[j]);
-                            firstLogicGate_Sim2.setComment(j + "");
-                            gateNumberButton_Sim2.setText("Gate: " + (j+1));
+            if(!buttonLock) {
+                for (int i = 0; i < select2InputLogicGatesButtonList.length; i++) {
+                    if (select2InputLogicGatesButtonList[i].isClicked()) {
+                        selectGate_Sim2 = i + 1;
+                        gateNumberButton_Sim2.setText("Gate: " + selectGate_Sim2);
+                        String[] pics = {
+                                "and_gate.png",
+                                "or_gate.png",
+                                "nand_gate.png",
+                                "nor_gate.png",
+                                "xor_gate.png",
+                                "xnor_gate.png",
+                                "not_gate.png"
+                        };
+                        if (isButton1Selected_Sim2) {
+                            if (selectGate_Sim2 == 7 && firstLogicGate_Sim2.hasPicture) {
+                                HashMap<Integer, Integer> map = new HashMap<>();
+                                map.put(0, 2);
+                                map.put(1, 3);
+                                map.put(2, 0);
+                                map.put(3, 1);
+                                map.put(4, 5);
+                                map.put(5, 4);
+                                int j = map.get(Integer.parseInt(firstLogicGate_Sim2.getComment()));
+                                firstLogicGate_Sim2.addPicture(pics[j]);
+                                firstLogicGate_Sim2.setComment(j + "");
+                                gateNumberButton_Sim2.setText("Gate: " + (j + 1));
 
-                        } else if (selectGate_Sim2 != 7) {
-                            firstLogicGate_Sim2.addPicture(pics[i]);
-                            firstLogicGate_Sim2.setComment(i + "");
-                        }
-                    } else {
-                        if(selectGate_Sim2 == 7 && secondLogicGate_Sim2.hasPicture) {
-                            HashMap<Integer,Integer> map = new HashMap<>();
-                            map.put(0, 2);
-                            map.put(1, 3);
-                            map.put(2, 0);
-                            map.put(3, 1);
-                            map.put(4, 5);
-                            map.put(5, 4);
-                            int j = map.get(Integer.parseInt(secondLogicGate_Sim2.getComment()));
-                            secondLogicGate_Sim2.addPicture(pics[j]);
-                            secondLogicGate_Sim2.setComment(j + "");
-                            gateNumberButton_Sim2.setText("Gate: " + (j+1));
+                            } else if (selectGate_Sim2 != 7) {
+                                firstLogicGate_Sim2.addPicture(pics[i]);
+                                firstLogicGate_Sim2.setComment(i + "");
+                            }
+                        } else {
+                            if (selectGate_Sim2 == 7 && secondLogicGate_Sim2.hasPicture) {
+                                HashMap<Integer, Integer> map = new HashMap<>();
+                                map.put(0, 2);
+                                map.put(1, 3);
+                                map.put(2, 0);
+                                map.put(3, 1);
+                                map.put(4, 5);
+                                map.put(5, 4);
+                                int j = map.get(Integer.parseInt(secondLogicGate_Sim2.getComment()));
+                                secondLogicGate_Sim2.addPicture(pics[j]);
+                                secondLogicGate_Sim2.setComment(j + "");
+                                gateNumberButton_Sim2.setText("Gate: " + (j + 1));
 
-                        } else if (selectGate_Sim2 != 7) {
-                            secondLogicGate_Sim2.addPicture(pics[i]);
-                            secondLogicGate_Sim2.setComment(i + "");
+                            } else if (selectGate_Sim2 != 7) {
+                                secondLogicGate_Sim2.addPicture(pics[i]);
+                                secondLogicGate_Sim2.setComment(i + "");
+                            }
                         }
                     }
+                    if (input1Button_Sim2.isClicked()) {
+                        input1Button_Sim2.setComment(input1Button_Sim2.getComment().equals("0") ? "1" : "0");
+                        input1Button_Sim2.setBackground(input1Button_Sim2.getBackground() == Color.red ? Color.green : Color.red);
+                    } else if (input2Button_Sim2.isClicked()) {
+                        input2Button_Sim2.setComment(input2Button_Sim2.getComment().equals("0") ? "1" : "0");
+                        input2Button_Sim2.setBackground(input2Button_Sim2.getBackground() == Color.red ? Color.green : Color.red);
+                    } else if (input3Button_Sim2.isClicked()) {
+                        input3Button_Sim2.setComment(input3Button_Sim2.getComment().equals("0") ? "1" : "0");
+                        input3Button_Sim2.setBackground(input3Button_Sim2.getBackground() == Color.red ? Color.green : Color.red);
+                    }
                 }
+
+                if (firstLogicGate_Sim2.isClicked())
+                    isButton1Selected_Sim2 = true;
+
+                if (secondLogicGate_Sim2.isClicked())
+                    isButton1Selected_Sim2 = false;
+
             }
 
-            if (resetButton_Sim2.isClicked()) {
-                sendCodeToArduino(true);
-                initialize_Sim2(); // Just reset everything saved
-            }
-
-            if(firstLogicGate_Sim2.isClicked()){
-                isButton1Selected_Sim2 = true;
+            if (isButton1Selected_Sim2) {
                 firstLogicGate_Sim2.enableGradient(new Color(24, 12, 55), new Color(78, 24, 24));
                 secondLogicGate_Sim2.enableGradient(Color.BLACK, Color.BLACK);
-            }
-
-            if(secondLogicGate_Sim2.isClicked()) {
-                isButton1Selected_Sim2 = false;
+            } else {
                 secondLogicGate_Sim2.enableGradient(new Color(24, 12, 55), new Color(78, 24, 24));
                 firstLogicGate_Sim2.enableGradient(Color.BLACK, Color.BLACK);
             }
 
+            // special buttons can be clicked anytime
+            if (showNextStepButton_Sim2.isClicked() && firstLogicGate_Sim2.hasPicture && secondLogicGate_Sim2.hasPicture) {
+                buttonLock = true;
+                stepCounter_Sim2++;
 
-            // logic gate numbering
+                // truth table variables
+                if(stepCounter_Sim2 == 1)
+                    displayTruthTableGate1_Sim2 = true;
+                else if(stepCounter_Sim2 == 2) {
+                    displayTruthTableGate1_Sim2 = false;
+                    displayTruthTableGate2_Sim2 = true;
+                } else
+                    displayTruthTableGate2_Sim2 = false;
+
+                if(stepCounter_Sim2 <= 2)
+                    sendCodeToArduino_Sim2(false);
+                else {
+                    sendCodeToArduino_Sim2(true);
+                    initialize_Sim2();
+                }
+            }
+            if (resetButton_Sim2.isClicked()) {
+                sendCodeToArduino_Sim1(true);
+                initialize_Sim2(); // Just reset everything saved
+            }
+
+            // Display truth tables
+            if(displayTruthTableGate1_Sim2) {
+                drawTruthTable(Integer.parseInt(firstLogicGate_Sim2.getComment()), 2);
+                arrowPointerButton.draw();
+            }
+
+            if(displayTruthTableGate2_Sim2) {
+                drawTruthTable(Integer.parseInt(secondLogicGate_Sim2.getComment()), 2);
+                arrowPointerButton.draw();
+            }
+
+
+            // Gate text
+            StdDraw.setPenColor(new Color(32, 84, 151));
+            StdDraw.setFont(new Font("Arial", Font.BOLD, 40));
+            if(firstLogicGate_Sim2.hasPicture && stepCounter_Sim2 > 0)
+                StdDraw.text(firstLogicGate_Sim2.getX(), firstLogicGate_Sim2.getY(),"1");
+            if(secondLogicGate_Sim2.hasPicture && stepCounter_Sim2 > 1)
+                StdDraw.text(secondLogicGate_Sim2.getX(), secondLogicGate_Sim2.getY(),"2");
+
+            // Logic gate numbering
             StdDraw.setPenColor(Color.red);
             StdDraw.setFont(new Font("Arial", Font.BOLD, 22));
             StdDraw.text(100, 750, "1");
@@ -481,7 +557,7 @@ public class Simulation {
         }
     }
 
-    public void sendCodeToArduino(boolean reset) {
+    public void sendCodeToArduino_Sim1(boolean reset) {
         if (reset) {
             SerialConnection.sendCodeToArduino("1~0~0~0~X~0~0");
             return;
@@ -489,24 +565,155 @@ public class Simulation {
 
         // Code -> R~A~B~C~#~Y~O
 
-        // R
+        // R - Reset
         StringBuilder simOutput = new StringBuilder("0~");
 
-        // A, B, C
+        // A, B, C - Inputs
         simOutput.append(input1Button_Sim1.getComment()).append("~");
         simOutput.append(input2Button_Sim1.getComment()).append("~");
         simOutput.append(input3Button_Sim1.getComment()).append("~");
 
-        // #
+        // # - Selected Gate
         simOutput.append(selectedGate).append("~");
 
-        // Y
+        // Y - correctness
         simOutput.append(checkInput_Sim1(simOutput.toString(), outputButton_Sim1.getComment()));
 
-        // O
+        // O - Output led (on/off)
         simOutput.append(outputButton_Sim1.getComment());
 
         SerialConnection.sendCodeToArduino(simOutput.toString());
+    }
+
+    public void sendCodeToArduino_Sim2(boolean reset) {
+        if (reset) {
+            SerialConnection.sendCodeToArduino("1~0~0~0~X~0~0");
+            return;
+        }
+
+        // Code -> R~A~B~C~#~Y~O
+
+        // R - Reset
+        StringBuilder simOutput = new StringBuilder("0~");
+
+        // A, B, C - Inputs
+        simOutput.append(stepCounter_Sim2 == 1 ? input1Button_Sim2.getComment() : outputFromFirstGate_Sim2).append("~");
+        simOutput.append(stepCounter_Sim2 == 1 ? input2Button_Sim2.getComment() : "0").append("~");
+        simOutput.append(input3Button_Sim2.getComment()).append("~");
+
+        // # - the step number
+        simOutput.append(stepCounter_Sim2).append("~");
+
+        // Y - correctness
+        simOutput.append(stepCounter_Sim2 == 1 ? "0~" : "1~");
+
+        // O - Output led (on/off)
+        int gate;
+        int a;
+        int b;
+        if (stepCounter_Sim2 == 1) {
+            isButton1Selected_Sim2 = true;
+            gate = Integer.parseInt(firstLogicGate_Sim2.getComment());
+            a = Integer.parseInt(input1Button_Sim2.getComment());
+            b = Integer.parseInt(input2Button_Sim2.getComment());
+        } else {
+            isButton1Selected_Sim2 = false;
+            gate = Integer.parseInt(secondLogicGate_Sim2.getComment());
+            a = outputFromFirstGate_Sim2;
+            b = Integer.parseInt(input3Button_Sim2.getComment());
+        }
+
+        if(stepCounter_Sim2 == 1) {
+            outputFromFirstGate_Sim2 = evaluateGate2Input(gate, a, b);
+            wireFromGate1to2_Sim2.changeAllColor(outputFromFirstGate_Sim2 == 1 ? Color.GREEN : Color.RED);
+        } else
+            outputButton_Sim2.setBackground(evaluateGate2Input(gate, a, b) == 1 ? Color.GREEN : Color.RED);
+
+
+        simOutput.append(evaluateGate2Input(gate, a, b));
+
+        SerialConnection.sendCodeToArduino(simOutput.toString());
+    }
+
+    private void drawTruthTable(int gate, int numInput){
+        int rows = (int) Math.pow(2, numInput);
+        int cols = numInput + 1;
+
+        int cellWidth = 80;
+        int cellHeight = 40;
+
+        int startX = 1280;
+        int startY = 420;
+
+        StdDraw.setPenColor(Color.WHITE);
+        StdDraw.setFont(new Font("Arial", Font.BOLD, 14));
+
+        // Draw header (inputs and output) on top
+        for (int c = 0; c < cols; c++) {
+            int x = startX + c * cellWidth;
+            int y = startY + cellHeight; // header above the first data row
+            StdDraw.rectangle(x, y, (double) cellWidth / 2, (double) cellHeight / 2);
+            if (c < numInput) {
+                String label;
+                if (numInput == 2)
+                    label = (c == 0) ? "A" : "B";
+                else
+                    label = "A" + (c + 1);
+
+                StdDraw.text(x, y, label);
+            } else
+                StdDraw.text(x, y, "Out");
+        }
+
+        // Determine which row to point at (if any)
+        boolean shouldPoint = false;
+        int selectedRow = 0;
+        if (numInput == 2) {
+            try {
+                if (displayTruthTableGate1_Sim2) {
+                    int a = Integer.parseInt(input1Button_Sim2.getComment());
+                    int b = Integer.parseInt(input2Button_Sim2.getComment());
+                    selectedRow = (a << 1) | b; // A is MSB, B is LSB
+                    shouldPoint = true;
+                } else if (displayTruthTableGate2_Sim2) {
+                    int a = outputFromFirstGate_Sim2; // use first gate output as A
+                    int b = Integer.parseInt(input3Button_Sim2.getComment()); // input3 as B
+                    selectedRow = (a << 1) | b;
+                    shouldPoint = true;
+                }
+            } catch (NumberFormatException ignored) {
+                shouldPoint = false;
+            }
+        }
+
+        // Draw data rows
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                int x = startX + c * cellWidth;
+                int y = startY - r * cellHeight;
+                StdDraw.rectangle(x, y, (double) cellWidth / 2, (double) cellHeight / 2);
+
+                if (c < numInput) {
+                    // input value for this row and column (binary counting order)
+                    int inputValue = (r >> (numInput - c - 1)) & 1;
+                    StdDraw.text(x, y, String.valueOf(inputValue));
+                } else {
+                    // calculate output for this row
+                    int a = (numInput >= 1) ? ((r >> (numInput - 1)) & 1) : 0;
+                    int b = (numInput >= 2) ? ((r >> (numInput - 2)) & 1) : 0;
+                    int outputValue = evaluateGate2Input(gate, a, b);
+                    StdDraw.text(x, y, String.valueOf(outputValue));
+                }
+            }
+        }
+
+        if (shouldPoint) {
+            // place the arrow outside the table on the left
+            int arrowX = startX - cellWidth;
+            int arrowY = startY - selectedRow * cellHeight;
+            arrowPointerButton.setX(arrowX);
+            arrowPointerButton.setY(arrowY);
+        }
     }
 
     private String checkInput_Sim1(String input, String output) {
@@ -518,7 +725,7 @@ public class Simulation {
         int gateNumber = Integer.parseInt(parts[4]);
 
         int expectedOutput = Integer.parseInt(output);
-        int actualOutput = evaluateGate(gateNumber, A, B, C);
+        int actualOutput = evaluateGate3Input(gateNumber, A, B, C);
 
         if (actualOutput == expectedOutput) {
             isCorrectButton.enableGradient(new Color(78, 230, 132), new Color(14, 112, 34));
@@ -531,34 +738,49 @@ public class Simulation {
         return (actualOutput == expectedOutput) ? "1~" : "0~";
     }
 
-    private int evaluateGate(int gate, int A, int B, int C) {
+    private int evaluateGate3Input(int gate, int A, int B, int C) {
         // 0 -> Off
         // 1 -> On
-        switch (gate) {
-            case 1: // AND
-                return A & B & C;
+        return switch (gate) {
+            case 1 -> // AND
+                    A & B & C;
+            case 2 -> // OR
+                    A | B | C;
+            case 3 -> // NAND
+                    (A & B & C) == 1 ? 0 : 1;
+            case 4 -> // NOR
+                    (A | B | C) == 1 ? 0 : 1;
+            case 5 -> // XOR (odd parity)
+                    A ^ B ^ C;
+            case 6 -> // XNOR
+                    (A ^ B ^ C) == 1 ? 0 : 1;
+            case 7 -> // NOT (invert B only)
+                    B == 1 ? 0 : 1;
+            default -> throw new IllegalArgumentException("Invalid gate number");
+        };
+    }
 
-            case 2: // OR
-                return A | B | C;
-
-            case 3: // NAND
-                return (A & B & C) == 1 ? 0 : 1;
-
-            case 4: // NOR
-                return (A | B | C) == 1 ? 0 : 1;
-
-            case 5: // XOR (odd parity)
-                return A ^ B ^ C;
-
-            case 6: // XNOR
-                return (A ^ B ^ C) == 1 ? 0 : 1;
-
-            case 7: // NOT (invert B only)
-                return B == 1 ? 0 : 1;
-
-            default:
-                throw new IllegalArgumentException("Invalid gate number");
-        }
+    private int evaluateGate2Input(int gate, int A, int B) {
+        gate++;
+        // 0 -> Off
+        // 1 -> On
+        return switch (gate) {
+            case 1 -> // AND
+                    A & B;
+            case 2 -> // OR
+                    A | B;
+            case 3 -> // NAND
+                    (A & B) == 1 ? 0 : 1;
+            case 4 -> // NOR
+                    (A | B) == 1 ? 0 : 1;
+            case 5 -> // XOR
+                    A ^ B;
+            case 6 -> // XNOR
+                    (A ^ B) == 1 ? 0 : 1;
+            case 7 -> // NOT (invert B only)
+                    B == 1 ? 0 : 1;
+            default -> throw new IllegalArgumentException("Invalid gate number");
+        };
     }
 
     public static void testCode() {
@@ -592,13 +814,5 @@ public class Simulation {
 
     public static void sendCode(String code) {
         SerialConnection.sendCodeToArduino(code);
-    }
-
-    public static void setSimulationNumber(int simulationNumber) {
-        Simulation.simulationNumber = simulationNumber;
-    }
-
-    public static int getSimulationNumber() {
-        return simulationNumber;
     }
 }
